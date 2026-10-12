@@ -90,6 +90,50 @@ sec{display:block;background:#fff}
 .empty{padding:22px 18px;color:var(--mute);font-size:12.5px}
 .cd{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:6px;vertical-align:1px}
 
+/* 탭 */
+.tabs{display:flex;gap:5px}
+.tab{font-size:12.5px;padding:5px 12px;border:1px solid var(--line);border-radius:5px;
+  background:#fff;color:var(--soft);cursor:pointer}
+.tab.on{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:700}
+
+/* 청소 */
+.chk{display:inline-block;width:17px;height:17px;border:1.5px solid var(--ink);border-radius:4px;
+  vertical-align:-3px;margin-right:10px;text-align:center;line-height:14px;font-size:12px;color:transparent}
+.chk.on{background:var(--ink);color:#fff}
+.chk.off{border-color:#c9c8c3}
+.rows tr.done td{color:var(--mute)}
+.rows tr.done .gu{font-weight:500;text-decoration:line-through;text-decoration-color:#d5d4cf}
+
+/* 수익 */
+.mbar{background:#fff;padding:14px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
+.mbar b{font-size:15px;font-weight:800;min-width:92px}
+.mbar .nav{margin-left:auto;display:flex;gap:5px}
+.big{display:flex;background:#fff;border-bottom:1px solid var(--ink)}
+.big > div{flex:1;padding:14px 16px;border-left:1px solid var(--line)}
+.big > div:first-child{border-left:none;background:#fafaf9}
+.big span{display:block;font-size:11.5px;color:var(--mute);margin-bottom:5px}
+.big b{font-size:20px;font-weight:800;letter-spacing:-.03em}
+.big b.pos{color:var(--ok)}
+.big b.neg{color:var(--hot)}
+.half{background:#fff;display:grid;grid-template-columns:1fr 1fr;gap:28px;padding:18px}
+.lb{font-size:11.5px;color:var(--mute);margin-bottom:6px;font-weight:700;letter-spacing:.04em}
+.ln{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line2);font-size:13px}
+.ln:first-child{border-top:none}
+.ln .k{color:#6b6b66;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ln .v{font-weight:600;white-space:nowrap}
+.ln .v.neg{color:var(--hot)}
+.ln .v.zero{color:#c9c8c3;font-weight:500}
+.ln.tot{border-top:1px solid var(--ink);margin-top:4px;padding-top:9px;font-weight:800}
+.shr{display:grid;grid-template-columns:62px 1fr 46px;align-items:center;gap:9px;padding:3px 0;font-size:12.5px}
+.shr i{height:9px;display:block;border-radius:1px;min-width:2px}
+.shr .v{text-align:right;color:#6b6b66}
+.mini{display:flex;align-items:flex-end;gap:5px;height:66px;margin-top:4px}
+.mini > div{flex:1;background:#d9d7d1;border-radius:1px 1px 0 0;position:relative;min-height:2px}
+.mini > div.now{background:var(--ink)}
+.mini > div.fut{opacity:.45}
+.mini em{position:absolute;bottom:-18px;left:0;right:0;text-align:center;font-size:10.5px;color:var(--mute);font-style:normal}
+.hint{font-size:11.5px;color:var(--mute);margin-top:26px;line-height:1.6}
+
 /* 하단 */
 .foot{background:#fff;border-top:1px solid var(--ink);padding:13px 18px;display:flex;gap:26px;flex-wrap:wrap}
 .foot .mm{display:flex;align-items:baseline;gap:6px}
@@ -132,6 +176,18 @@ sec{display:block;background:#fff}
   .rows td+td{padding-left:0}
   .hd,.foot,.leg,.empty{padding-left:12px;padding-right:12px}
   .foot{gap:16px}
+  .half{grid-template-columns:1fr;gap:20px;padding:14px 12px}
+  .big{flex-wrap:wrap}
+  .big > div{flex:1 0 50%;border-left:1px solid var(--line);border-top:1px solid var(--line)}
+  .big > div:nth-child(-n+2){border-top:none}
+  .big > div:nth-child(odd){border-left:none}
+  .big b{font-size:18px}
+  .mbar{padding:12px}
+  .tabs{gap:4px}
+  .tab{padding:5px 9px;font-size:12px}
+  .bar{flex-wrap:wrap;gap:8px}
+  .bar .sp{width:100%;margin-left:0}
+  .bar .sp .btn{flex:1}
 }
 </style>
 </head>
@@ -151,6 +207,11 @@ sec{display:block;background:#fff}
 <div class="wrap" id="app" style="display:none">
   <div class="bar">
     <span class="lg">마일드선릉</span>
+    <span class="tabs">
+      <button class="tab on" data-tab="cal">달력</button>
+      <button class="tab" data-tab="clean">청소</button>
+      <button class="tab" data-tab="money">수익</button>
+    </span>
     <span class="sp">
       <button class="btn sm" id="btnSync">채널 동기화</button>
       <button class="btn sm k" id="btnNew">+ 예약</button>
@@ -158,6 +219,8 @@ sec{display:block;background:#fff}
     </span>
   </div>
 
+<!-- ═══ 달력 탭 ═══ -->
+<div data-pane="cal">
   <div class="today" id="today"></div>
 
   <div class="cal">
@@ -190,6 +253,50 @@ sec{display:block;background:#fff}
     <span><i class="cd" style="background:var(--ex)"></i>익스피디아</span>
     <span><i class="cd" style="background:var(--dr)"></i>직접예약</span>
   </div>
+</div>
+
+<!-- ═══ 청소 탭 ═══ -->
+<div data-pane="clean" style="display:none">
+  <sec>
+    <div class="hd"><span class="t">이번 주</span><span class="h" id="cwRange"></span><span class="n" id="cwN"></span></div>
+    <table class="rows"><tbody id="cwRows"></tbody></table>
+  </sec>
+  <sec>
+    <div class="hd"><span class="t">다음 주</span><span class="h" id="cnRange"></span><span class="n" id="cnN"></span></div>
+    <table class="rows"><tbody id="cnRows"></tbody></table>
+  </sec>
+  <sec>
+    <div class="hd"><span class="t">이번 달 청소비</span><span class="h">여사님께 드릴 금액</span><span class="n" id="cmN"></span></div>
+    <table class="rows"><tbody id="cmRows"></tbody></table>
+  </sec>
+  <div class="leg">청소 건은 <b>퇴실 날짜마다 자동으로</b> 생깁니다. 예약이 취소되면 같이 사라집니다.</div>
+</div>
+
+<!-- ═══ 수익 탭 ═══ -->
+<div data-pane="money" style="display:none">
+  <div class="mbar">
+    <b id="mnLabel"></b>
+    <span class="nav">
+      <button class="btn sm gh" id="nPrev">‹</button>
+      <button class="btn sm gh" id="nNow">이번 달</button>
+      <button class="btn sm gh" id="nNext">›</button>
+    </span>
+  </div>
+  <div class="big" id="mBig"></div>
+  <div class="half">
+    <div>
+      <div class="lb">수입</div><div id="mIn"></div>
+      <div class="lb" style="margin-top:22px">비용</div><div id="mOut"></div>
+    </div>
+    <div>
+      <div class="lb">채널 비중</div><div id="mShare"></div>
+      <div class="lb" style="margin-top:22px">1박 평균</div><div id="mAvg"></div>
+      <div class="lb" style="margin-top:22px">월별 순익</div>
+      <div class="mini" id="mMini"></div>
+      <div class="hint">아직 안 지난 달은 지금까지 들어온 예약 기준입니다</div>
+    </div>
+  </div>
+</div>
 </div>
 
 <!-- ───────── 예약 입력/수정 ───────── -->
@@ -229,7 +336,10 @@ sec{display:block;background:#fff}
 <div class="ov" id="ovCfg"><div class="sheet">
   <h3>설정</h3>
   <div class="sh">방 이름과 채널 iCal 주소</div>
-  <div class="f"><label>방 이름</label><input id="cRoom" placeholder="예: 성수룸"></div>
+  <div class="f2">
+    <div class="f"><label>방 이름</label><input id="cRoom" placeholder="예: 선릉룸"></div>
+    <div class="f"><label>청소 단가 (원/건)</label><input id="cFee" type="number" min="0" step="1000" placeholder="45000"></div>
+  </div>
 
   <div style="font-size:11.5px;color:var(--mute);margin:16px 0 7px">채널 iCal 주소</div>
   <div id="feeds"></div>
@@ -274,7 +384,10 @@ const nights = (a,b) => Math.round((parse(b)-parse(a))/86400000);
 const esc = (s) => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 let USER=null, ROOM=null, FEEDS=[], BKS=[], MON=new Date();
+let CLS=[], SET={cleaning_fee:45000}, MMON=new Date(), TAB='cal';
 const TODAY = ymd(new Date());
+/* 월요일 시작 주의 첫날 */
+const monOf = (s) => addD(s, -((parse(s).getDay()+6)%7));
 
 /* ── 로그인 ───────────────────────────────────────── */
 function loginMsg(t,err){ const e=$('loginMsg'); e.textContent=t||''; e.className=err?'err':''; }
@@ -306,21 +419,45 @@ async function loadAll(){
   const { data: feeds } = await sb.from('ical_feeds').select('*').eq('room_id', ROOM.id);
   FEEDS = feeds || [];
 
-  const from = ymd(new Date(MON.getFullYear(), MON.getMonth()-1, 1));
-  const to   = ymd(new Date(MON.getFullYear(), MON.getMonth()+2, 0));
-  const far  = addD(TODAY, 70);
+  /* 방 1개라 데이터가 적습니다 — 앞뒤 1년을 한 번에 받아두고
+     달력·청소·수익 탭이 같은 배열을 나눠 씁니다. (요청 1번으로 끝) */
+  const FROM = addD(TODAY, -400), TO = addD(TODAY, 400);
   const { data: bks } = await sb.from('bookings').select('*')
     .neq('status','cancelled')
-    .lte('checkin_date', (to>far?to:far))
-    .gte('checkout_date', (from<TODAY?from:TODAY))
+    .lte('checkin_date', TO).gte('checkout_date', FROM)
     .order('checkin_date');
   BKS = bks || [];
+
+  const { data: cls } = await sb.from('cleanings').select('*')
+    .gte('cdate', FROM).lte('cdate', TO).order('cdate');
+  CLS = cls || [];
+
+  const { data: st } = await sb.from('settings').select('*').maybeSingle();
+  if (st) SET = st;
+  else {
+    const { data } = await sb.from('settings')
+      .insert({ owner_id:USER.id, cleaning_fee:45000 }).select().maybeSingle();
+    if (data) SET = data;
+  }
 }
 
 /* ── 그리기 ───────────────────────────────────────── */
 function render(){
   renderToday(); renderCal(); renderUpcoming(); renderGaps(); renderFoot();
+  renderClean(); renderMoney();
 }
+
+/* ── 탭 ───────────────────────────────────────────── */
+function setTab(t){
+  TAB = t;
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab===t));
+  document.querySelectorAll('[data-pane]').forEach(p => { p.style.display = (p.dataset.pane===t) ? '' : 'none'; });
+  // 「+ 예약 / 채널 동기화」는 달력에서만 의미가 있습니다
+  $('btnNew').style.display  = (t==='cal') ? '' : 'none';
+  $('btnSync').style.display = (t==='cal') ? '' : 'none';
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.tab').forEach(b => { b.onclick = () => setTab(b.dataset.tab); });
 
 function nightsOf(b){ const out=[]; for(let d=b.checkin_date; d<b.checkout_date; d=addD(d,1)) out.push(d); return out; }
 function byNight(){
@@ -457,6 +594,152 @@ function renderFoot(){
     `<div class="mm"><span>마지막 동기화</span><b style="font-weight:600;font-size:12.5px">${st}</b></div>`;
 }
 
+/* ── 청소 탭 ──────────────────────────────────────── */
+function cleanRow(c){
+  const b = BKS.find(x => x.id === c.booking_id);
+  const nextIn = BKS.filter(x => x.checkin_date >= c.cdate && x.status==='confirmed')
+                    .sort((a,b2)=>a.checkin_date.localeCompare(b2.checkin_date))[0];
+  let sub;
+  if (c.done) sub = '완료' + (c.done_at ? ' · ' + new Date(c.done_at).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'}) : '');
+  else if (b && b.guest_name) sub = esc(b.guest_name) + ' 퇴실';
+  else sub = '퇴실 후 청소';
+  const urgent = nextIn && nextIn.checkin_date === c.cdate;
+  const nx = nextIn ? (urgent ? '<b style="color:var(--hot)">같은 날 입실 — 급함</b>' : '다음 입실 ' + md(nextIn.checkin_date)) : '다음 입실 없음';
+  return `<tr class="${c.done?'done':''}" data-cl="${c.id}">
+    <td style="width:148px"><span class="chk ${c.done?'on':'off'}">✓</span><b>${md(c.cdate)} (${dowOf(c.cdate)})</b></td>
+    <td class="gu">${sub}</td>
+    <td class="sub">${c.done ? '' : nx}</td>
+    <td class="r">${won(c.amount)}</td></tr>`;
+}
+
+function renderClean(){
+  const w0 = monOf(TODAY), w1 = addD(w0,6), n0 = addD(w0,7), n1 = addD(w0,13);
+  const inR = (a,b2) => CLS.filter(c => c.cdate>=a && c.cdate<=b2);
+  const sum = (arr) => arr.reduce((s,c)=>s+Number(c.amount||0),0);
+
+  const wk = inR(w0,w1), nx = inR(n0,n1);
+  $('cwRange').textContent = `${md(w0)} – ${md(w1)}`;
+  $('cnRange').textContent = `${md(n0)} – ${md(n1)}`;
+  $('cwN').textContent = wk.length ? `${wk.length}건 · ${won(sum(wk))}원` : '';
+  $('cnN').textContent = nx.length ? `${nx.length}건 · ${won(sum(nx))}원` : '';
+  $('cwRows').innerHTML = wk.length ? wk.map(cleanRow).join('')
+    : `<tr><td colspan="4" class="empty">이번 주는 퇴실이 없습니다.</td></tr>`;
+  $('cnRows').innerHTML = nx.length ? nx.map(cleanRow).join('')
+    : `<tr><td colspan="4" class="empty">다음 주는 퇴실이 없습니다.</td></tr>`;
+
+  // 이번 달 청소비
+  const y=MMON.getFullYear(), m=MMON.getMonth();
+  const m0 = ymd(new Date(y,m,1)), m1 = ymd(new Date(y,m+1,0));
+  const mo = inR(m0,m1), dn = mo.filter(c=>c.done), td = mo.filter(c=>!c.done);
+  $('cmN').textContent = mo.length ? `${mo.length}건 · ${won(sum(mo))}원` : '0건';
+  $('cmRows').innerHTML = mo.length ? [
+    dn.length ? `<tr><td class="sub" style="width:148px">완료</td><td class="gu">${dn.length}건</td>
+      <td class="sub">${dn.map(c=>md(c.cdate)).join(' · ')}</td><td class="r">${won(sum(dn))}</td></tr>` : '',
+    td.length ? `<tr><td class="sub" style="width:148px">예정</td><td class="gu">${td.length}건</td>
+      <td class="sub">${td.map(c=>md(c.cdate)).join(' · ')}</td><td class="r">${won(sum(td))}</td></tr>` : '',
+  ].join('') : `<tr><td colspan="4" class="empty">이번 달 청소가 없습니다.</td></tr>`;
+}
+
+/* 청소 줄을 누르면 완료 ↔ 미완료 */
+document.addEventListener('click', async (e) => {
+  const t = e.target.closest('[data-cl]');
+  if (!t) return;
+  const c = CLS.find(x => x.id === t.dataset.cl);
+  if (!c) return;
+  const now = !c.done;
+  const { error } = await sb.from('cleanings')
+    .update({ done: now, done_at: now ? new Date().toISOString() : null }).eq('id', c.id);
+  if (error) return alert(error.message);
+  c.done = now; c.done_at = now ? new Date().toISOString() : null;
+  renderClean(); renderMoney();
+});
+
+/* ── 수익 탭 ──────────────────────────────────────── */
+/* 달에 걸친 예약은 밤 수로 쪼개서 그 달 몫만 셉니다 */
+function revIn(m0, m1){
+  let rev=0, n=0, cnt=0; const byCh={};
+  BKS.filter(b=>b.status==='confirmed').forEach(b=>{
+    const tot = nights(b.checkin_date, b.checkout_date);
+    const inM = nightsOf(b).filter(d=>d>=m0 && d<=m1).length;
+    if (!inM) return;
+    cnt++; n += inM;
+    const amt = b.amount!=null ? Number(b.amount)*inM/tot : 0;
+    rev += amt;
+    byCh[b.channel] = (byCh[b.channel]||{amt:0,cnt:0});
+    byCh[b.channel].amt += amt; byCh[b.channel].cnt++;
+  });
+  return { rev, n, cnt, byCh };
+}
+function costIn(m0, m1){
+  return CLS.filter(c=>c.cdate>=m0 && c.cdate<=m1).reduce((s,c)=>s+Number(c.amount||0),0);
+}
+function netOf(d){
+  const m0 = ymd(new Date(d.getFullYear(), d.getMonth(), 1));
+  const m1 = ymd(new Date(d.getFullYear(), d.getMonth()+1, 0));
+  return revIn(m0,m1).rev - costIn(m0,m1);
+}
+
+function renderMoney(){
+  const y=MMON.getFullYear(), m=MMON.getMonth();
+  const m0 = ymd(new Date(y,m,1)), m1 = ymd(new Date(y,m+1,0));
+  $('mnLabel').textContent = `${y}년 ${m+1}월`;
+
+  const R = revIn(m0,m1), C = costIn(m0,m1), net = R.rev - C;
+  const nm = byNight();
+  let sold=0, days=0;
+  for(let d=m0; d<=m1; d=addD(d,1)){ days++; if((nm[d]||[]).some(b=>b.status==='confirmed')) sold++; }
+
+  $('mBig').innerHTML =
+    `<div><span>${m+1}월 순익</span><b class="${net>=0?'pos':'neg'}">${won(Math.round(net))}</b></div>` +
+    `<div><span>수입</span><b>${won(Math.round(R.rev))}</b></div>` +
+    `<div><span>비용</span><b class="${C?'neg':''}">${won(C)}</b></div>` +
+    `<div><span>가동률</span><b>${Math.round(sold/days*100)}%</b></div>`;
+
+  const order = ['airbnb','booking','agoda','expedia','direct','other'];
+  $('mIn').innerHTML = order.map(k=>{
+    const v = R.byCh[k]; const c = chOf(k);
+    if (!v && k==='other') return '';
+    return `<div class="ln"><span class="k"><i class="cd" style="background:${c.c}"></i>${c.n}${v?' · '+v.cnt+'건':''}</span>
+      <span class="v${v?'':' zero'}">${v?won(Math.round(v.amt)):'—'}</span></div>`;
+  }).join('') +
+  `<div class="ln tot"><span class="k">합계 · ${R.cnt}건 · ${R.n}박</span><span class="v">${won(Math.round(R.rev))}</span></div>`;
+
+  const mo = CLS.filter(c=>c.cdate>=m0 && c.cdate<=m1);
+  $('mOut').innerHTML =
+    `<div class="ln"><span class="k">청소비 · ${mo.length}건</span><span class="v${C?' neg':' zero'}">${C?won(C):'—'}</span></div>` +
+    `<div class="ln tot"><span class="k">합계</span><span class="v${C?' neg':''}">${won(C)}</span></div>`;
+
+  const tot = R.rev || 1;
+  $('mShare').innerHTML = order.filter(k=>R.byCh[k]).map(k=>{
+    const p = Math.round(R.byCh[k].amt/tot*100); const c = chOf(k);
+    return `<div class="shr"><span>${c.n}</span><i style="background:${c.c};width:${p}%"></i><span class="v">${p}%</span></div>`;
+  }).join('') || `<div class="hint" style="margin-top:0">아직 금액이 적힌 예약이 없습니다.</div>`;
+
+  const perNight = R.n ? R.rev/R.n : 0;
+  let free=0; for(let d=m0; d<=m1; d=addD(d,1)) if(!(nm[d]||[]).length) free++;
+  $('mAvg').innerHTML =
+    `<div class="ln"><span class="k">판매 단가</span><span class="v">${R.n?won(Math.round(perNight)):'—'}</span></div>` +
+    `<div class="ln"><span class="k">청소비 빼면</span><span class="v">${R.n?won(Math.round((R.rev-C)/R.n)):'—'}</span></div>` +
+    `<div class="ln"><span class="k">평균 숙박일</span><span class="v">${R.cnt?(R.n/R.cnt).toFixed(1)+'박':'—'}</span></div>` +
+    `<div class="ln"><span class="k">빈 밤</span><span class="v">${free}박</span></div>`;
+
+  // 월별 순익 막대 — 이번 달 기준 앞 4달 + 다음 달
+  const bars = [];
+  for (let i=-4; i<=1; i++) bars.push(new Date(y, m+i, 1));
+  const vals = bars.map(netOf);
+  const max = Math.max(1, ...vals.map(v=>Math.abs(v)));
+  $('mMini').innerHTML = bars.map((d,i)=>{
+    const h = Math.max(2, Math.round(Math.abs(vals[i])/max*100));
+    const cls = (d.getFullYear()===y && d.getMonth()===m) ? 'now'
+              : (d > new Date(y, m, 1) ? 'fut' : '');
+    return `<div class="${cls}" style="height:${h}%" title="${won(Math.round(vals[i]))}원"><em>${d.getMonth()+1}월</em></div>`;
+  }).join('');
+}
+
+$('nPrev').onclick = ()=>{ MMON = new Date(MMON.getFullYear(), MMON.getMonth()-1, 1); renderClean(); renderMoney(); };
+$('nNext').onclick = ()=>{ MMON = new Date(MMON.getFullYear(), MMON.getMonth()+1, 1); renderClean(); renderMoney(); };
+$('nNow').onclick  = ()=>{ MMON = new Date(); renderClean(); renderMoney(); };
+
 /* ── 예약 열기/저장 ───────────────────────────────── */
 let EDIT = null;
 function openBk(b, presetDate){
@@ -556,6 +839,7 @@ $('btnSync').onclick = async () => {
 const CHLIST = [['airbnb','에어비앤비'],['booking','부킹닷컴'],['agoda','아고다'],['expedia','익스피디아']];
 $('btnCfg').onclick = ()=>{
   $('cRoom').value = ROOM?.name || '';
+  $('cFee').value = SET?.cleaning_fee ?? 45000;
   $('feeds').innerHTML = CHLIST.map(([k,n])=>{
     const f = FEEDS.find(x=>x.channel===k);
     const st = f?.last_sync_at
@@ -577,6 +861,14 @@ $('cSave').onclick = async () => {
   const name = $('cRoom').value.trim() || '내 방';
   if (name !== ROOM.name) await sb.from('rooms').update({ name }).eq('id', ROOM.id);
 
+  /* 청소 단가 — 바꾸면 「아직 안 한」 청소 건에만 반영합니다.
+     이미 완료한 건은 그때 드린 금액이라 건드리지 않습니다. */
+  const fee = $('cFee').value ? Number($('cFee').value) : 45000;
+  if (fee !== Number(SET.cleaning_fee)) {
+    await sb.from('settings').upsert({ owner_id:USER.id, cleaning_fee:fee, updated_at:new Date().toISOString() });
+    await sb.from('cleanings').update({ amount: fee }).eq('done', false);
+  }
+
   for (const inp of $('feeds').querySelectorAll('input[data-ch]')){
     const ch = inp.dataset.ch, url = inp.value.trim();
     const f = FEEDS.find(x=>x.channel===ch);
@@ -596,7 +888,7 @@ async function boot(){
   if (!session){ $('login').style.display='block'; $('app').style.display='none'; return; }
   USER = session.user;
   $('login').style.display='none'; $('app').style.display='block';
-  await loadAll(); render();
+  await loadAll(); render(); setTab('cal');
 }
 boot();
 </script>
