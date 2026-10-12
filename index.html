@@ -69,6 +69,10 @@ button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit
 .ev.ex{color:#3d3100}
 .ev.blocked{opacity:.5}
 .ev.empty{background:#f4f3f0;color:#b5b4af;font-weight:500;cursor:default}
+.cv{font-size:10.5px;margin-top:3px;padding:2px 5px;border-radius:3px;cursor:pointer;font-weight:700;
+  background:#fff;border:1px solid var(--ink);color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.cv.done{border-color:var(--line);color:var(--mute);font-weight:500;background:#fafaf9}
 
 /* 목록 */
 sec{display:block;background:#fff}
@@ -169,6 +173,7 @@ sec{display:block;background:#fff}
   .wrap{padding-bottom:40px}
   .cell{min-height:54px;padding:3px 2px}
   .ev{font-size:9.5px;padding:1px 2px;letter-spacing:-.03em}
+  .cv{font-size:9px;padding:1px 2px;letter-spacing:-.03em}
   .cal{padding:12px 8px 4px}
   .dow{font-size:10px}
   .cell .dn{font-size:10.5px}
@@ -213,7 +218,6 @@ sec{display:block;background:#fff}
     <span class="tabs">
       <button class="tab on" data-tab="cal">달력</button>
       <button class="tab" data-tab="clean">청소</button>
-      <button class="tab" data-tab="money">수익</button>
     </span>
     <span class="sp">
       <button class="btn sm" id="btnSync">채널 동기화</button>
@@ -270,37 +274,12 @@ sec{display:block;background:#fff}
     <table class="rows"><tbody id="cnRows"></tbody></table>
   </sec>
   <sec>
-    <div class="hd"><span class="t">이번 달 청소비</span><span class="h">여사님께 드릴 금액</span><span class="n" id="cmN"></span></div>
+    <div class="hd"><span class="t">이번 달 청소비</span><span class="h" id="cmWho">드릴 금액</span><span class="n" id="cmN"></span></div>
     <table class="rows"><tbody id="cmRows"></tbody></table>
   </sec>
   <div class="leg">청소 건은 <b>퇴실 날짜마다 자동으로</b> 생깁니다. 예약이 취소되면 같이 사라집니다.</div>
 </div>
 
-<!-- ═══ 수익 탭 ═══ -->
-<div data-pane="money" style="display:none">
-  <div class="mbar">
-    <b id="mnLabel"></b>
-    <span class="nav">
-      <button class="btn sm gh" id="nPrev">‹</button>
-      <button class="btn sm gh" id="nNow">이번 달</button>
-      <button class="btn sm gh" id="nNext">›</button>
-    </span>
-  </div>
-  <div class="big" id="mBig"></div>
-  <div class="half">
-    <div>
-      <div class="lb">수입</div><div id="mIn"></div>
-      <div class="lb" style="margin-top:22px">비용</div><div id="mOut"></div>
-    </div>
-    <div>
-      <div class="lb">채널 비중</div><div id="mShare"></div>
-      <div class="lb" style="margin-top:22px">1박 평균</div><div id="mAvg"></div>
-      <div class="lb" style="margin-top:22px">월별 순익</div>
-      <div class="mini" id="mMini"></div>
-      <div class="hint">아직 안 지난 달은 지금까지 들어온 예약 기준입니다</div>
-    </div>
-  </div>
-</div>
 </div>
 
 <!-- ───────── 예약 입력/수정 ───────── -->
@@ -345,6 +324,7 @@ sec{display:block;background:#fff}
     <div class="f"><label>방 이름</label><input id="cRoom" placeholder="예: 선릉룸"></div>
     <div class="f"><label>청소 단가 (원/건)</label><input id="cFee" type="number" min="0" step="1000" placeholder="45000"></div>
   </div>
+  <div class="f"><label>청소 담당자</label><input id="cName" placeholder="예: 임여사님"></div>
 
   <div style="font-size:11.5px;color:var(--mute);margin:16px 0 7px">채널 iCal 주소</div>
   <div id="feeds"></div>
@@ -391,6 +371,7 @@ const esc = (s) => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'
 
 let USER=null, ROOM=null, FEEDS=[], BKS=[], MON=new Date();
 let CLS=[], SET={cleaning_fee:45000}, MMON=new Date(), TAB='cal';
+let CLEANER='';
 const TODAY = ymd(new Date());
 /* 월요일 시작 주의 첫날 */
 const monOf = (s) => addD(s, -((parse(s).getDay()+6)%7));
@@ -445,12 +426,13 @@ async function loadAll(){
       .insert({ owner_id:USER.id, cleaning_fee:45000 }).select().maybeSingle();
     if (data) SET = data;
   }
+  CLEANER = (SET && SET.cleaner_name) || '';
 }
 
 /* ── 그리기 ───────────────────────────────────────── */
 function render(){
   renderToday(); renderCal(); renderUpcoming(); renderGaps(); renderFoot();
-  renderClean(); renderMoney();
+  renderClean();
 }
 
 /* ── 탭 ───────────────────────────────────────────── */
@@ -521,6 +503,10 @@ function renderCal(){
     } else if (!off) {
       inner += `<div class="ev empty" data-new="${s}">빈 방</div>`;
     }
+    /* [2026-10-12] 퇴실일에는 청소를 같은 칸에 같이 보여줍니다.
+       탭을 왔다 갔다 하지 않아도 「이 날 청소 있구나」가 바로 보입니다. */
+    const cl = CLS.find(c => c.cdate === s);
+    if (cl) inner += `<div class="cv${cl.done?' done':''}" data-cl="${cl.id}">${cl.done?'✓ ':''}청소${CLEANER?' · '+esc(CLEANER):''}</div>`;
     h += `<div class="cell${off?' off':''}${s===TODAY?' now':''}">${inner}</div>`;
   }
   $('grid').innerHTML = h;
@@ -639,6 +625,7 @@ function renderClean(){
   const y=MMON.getFullYear(), m=MMON.getMonth();
   const m0 = ymd(new Date(y,m,1)), m1 = ymd(new Date(y,m+1,0));
   const mo = inR(m0,m1), dn = mo.filter(c=>c.done), td = mo.filter(c=>!c.done);
+  $('cmWho').textContent = CLEANER ? (CLEANER + '께 드릴 금액') : '드릴 금액';
   $('cmN').textContent = mo.length ? `${mo.length}건 · ${won(sum(mo))}원` : '0건';
   $('cmRows').innerHTML = mo.length ? [
     dn.length ? `<tr><td class="sub" style="width:148px">완료</td><td class="gu">${dn.length}건</td>
@@ -659,94 +646,8 @@ document.addEventListener('click', async (e) => {
     .update({ done: now, done_at: now ? new Date().toISOString() : null }).eq('id', c.id);
   if (error) return alert(error.message);
   c.done = now; c.done_at = now ? new Date().toISOString() : null;
-  renderClean(); renderMoney();
+  renderClean();
 });
-
-/* ── 수익 탭 ──────────────────────────────────────── */
-/* 달에 걸친 예약은 밤 수로 쪼개서 그 달 몫만 셉니다 */
-function revIn(m0, m1){
-  let rev=0, n=0, cnt=0; const byCh={};
-  BKS.filter(b=>b.status==='confirmed').forEach(b=>{
-    const tot = nights(b.checkin_date, b.checkout_date);
-    const inM = nightsOf(b).filter(d=>d>=m0 && d<=m1).length;
-    if (!inM) return;
-    cnt++; n += inM;
-    const amt = b.amount!=null ? Number(b.amount)*inM/tot : 0;
-    rev += amt;
-    byCh[b.channel] = (byCh[b.channel]||{amt:0,cnt:0});
-    byCh[b.channel].amt += amt; byCh[b.channel].cnt++;
-  });
-  return { rev, n, cnt, byCh };
-}
-function costIn(m0, m1){
-  return CLS.filter(c=>c.cdate>=m0 && c.cdate<=m1).reduce((s,c)=>s+Number(c.amount||0),0);
-}
-function netOf(d){
-  const m0 = ymd(new Date(d.getFullYear(), d.getMonth(), 1));
-  const m1 = ymd(new Date(d.getFullYear(), d.getMonth()+1, 0));
-  return revIn(m0,m1).rev - costIn(m0,m1);
-}
-
-function renderMoney(){
-  const y=MMON.getFullYear(), m=MMON.getMonth();
-  const m0 = ymd(new Date(y,m,1)), m1 = ymd(new Date(y,m+1,0));
-  $('mnLabel').textContent = `${y}년 ${m+1}월`;
-
-  const R = revIn(m0,m1), C = costIn(m0,m1), net = R.rev - C;
-  const nm = byNight();
-  let sold=0, days=0;
-  for(let d=m0; d<=m1; d=addD(d,1)){ days++; if((nm[d]||[]).some(b=>b.status==='confirmed')) sold++; }
-
-  $('mBig').innerHTML =
-    `<div><span>${m+1}월 순익</span><b class="${net>=0?'pos':'neg'}">${won(Math.round(net))}</b></div>` +
-    `<div><span>수입</span><b>${won(Math.round(R.rev))}</b></div>` +
-    `<div><span>비용</span><b class="${C?'neg':''}">${won(C)}</b></div>` +
-    `<div><span>가동률</span><b>${Math.round(sold/days*100)}%</b></div>`;
-
-  const order = ['airbnb','booking','agoda','expedia','wehome','direct','other'];
-  $('mIn').innerHTML = order.map(k=>{
-    const v = R.byCh[k]; const c = chOf(k);
-    if (!v && k==='other') return '';
-    return `<div class="ln"><span class="k"><i class="cd" style="background:${c.c}"></i>${c.n}${v?' · '+v.cnt+'건':''}</span>
-      <span class="v${v?'':' zero'}">${v?won(Math.round(v.amt)):'—'}</span></div>`;
-  }).join('') +
-  `<div class="ln tot"><span class="k">합계 · ${R.cnt}건 · ${R.n}박</span><span class="v">${won(Math.round(R.rev))}</span></div>`;
-
-  const mo = CLS.filter(c=>c.cdate>=m0 && c.cdate<=m1);
-  $('mOut').innerHTML =
-    `<div class="ln"><span class="k">청소비 · ${mo.length}건</span><span class="v${C?' neg':' zero'}">${C?won(C):'—'}</span></div>` +
-    `<div class="ln tot"><span class="k">합계</span><span class="v${C?' neg':''}">${won(C)}</span></div>`;
-
-  const tot = R.rev || 1;
-  $('mShare').innerHTML = order.filter(k=>R.byCh[k]).map(k=>{
-    const p = Math.round(R.byCh[k].amt/tot*100); const c = chOf(k);
-    return `<div class="shr"><span>${c.n}</span><i style="background:${c.c};width:${p}%"></i><span class="v">${p}%</span></div>`;
-  }).join('') || `<div class="hint" style="margin-top:0">아직 금액이 적힌 예약이 없습니다.</div>`;
-
-  const perNight = R.n ? R.rev/R.n : 0;
-  let free=0; for(let d=m0; d<=m1; d=addD(d,1)) if(!(nm[d]||[]).length) free++;
-  $('mAvg').innerHTML =
-    `<div class="ln"><span class="k">판매 단가</span><span class="v">${R.n?won(Math.round(perNight)):'—'}</span></div>` +
-    `<div class="ln"><span class="k">청소비 빼면</span><span class="v">${R.n?won(Math.round((R.rev-C)/R.n)):'—'}</span></div>` +
-    `<div class="ln"><span class="k">평균 숙박일</span><span class="v">${R.cnt?(R.n/R.cnt).toFixed(1)+'박':'—'}</span></div>` +
-    `<div class="ln"><span class="k">빈 밤</span><span class="v">${free}박</span></div>`;
-
-  // 월별 순익 막대 — 이번 달 기준 앞 4달 + 다음 달
-  const bars = [];
-  for (let i=-4; i<=1; i++) bars.push(new Date(y, m+i, 1));
-  const vals = bars.map(netOf);
-  const max = Math.max(1, ...vals.map(v=>Math.abs(v)));
-  $('mMini').innerHTML = bars.map((d,i)=>{
-    const h = Math.max(2, Math.round(Math.abs(vals[i])/max*100));
-    const cls = (d.getFullYear()===y && d.getMonth()===m) ? 'now'
-              : (d > new Date(y, m, 1) ? 'fut' : '');
-    return `<div class="${cls}" style="height:${h}%" title="${won(Math.round(vals[i]))}원"><em>${d.getMonth()+1}월</em></div>`;
-  }).join('');
-}
-
-$('nPrev').onclick = ()=>{ MMON = new Date(MMON.getFullYear(), MMON.getMonth()-1, 1); renderClean(); renderMoney(); };
-$('nNext').onclick = ()=>{ MMON = new Date(MMON.getFullYear(), MMON.getMonth()+1, 1); renderClean(); renderMoney(); };
-$('nNow').onclick  = ()=>{ MMON = new Date(); renderClean(); renderMoney(); };
 
 /* ── 예약 열기/저장 ───────────────────────────────── */
 let EDIT = null;
@@ -866,6 +767,7 @@ const CHLIST = [['airbnb','에어비앤비'],['booking','부킹닷컴'],['agoda'
 $('btnCfg').onclick = ()=>{
   $('cRoom').value = ROOM?.name || '';
   $('cFee').value = SET?.cleaning_fee ?? 45000;
+  $('cName').value = CLEANER;
   $('feeds').innerHTML = CHLIST.map(([k,n])=>{
     const f = FEEDS.find(x=>x.channel===k);
     const st = f?.last_sync_at
@@ -890,9 +792,10 @@ $('cSave').onclick = async () => {
   /* 청소 단가 — 바꾸면 「아직 안 한」 청소 건에만 반영합니다.
      이미 완료한 건은 그때 드린 금액이라 건드리지 않습니다. */
   const fee = $('cFee').value ? Number($('cFee').value) : 45000;
-  if (fee !== Number(SET.cleaning_fee)) {
-    await sb.from('settings').upsert({ owner_id:USER.id, cleaning_fee:fee, updated_at:new Date().toISOString() });
-    await sb.from('cleanings').update({ amount: fee }).eq('done', false);
+  const who = $('cName').value.trim() || null;
+  if (fee !== Number(SET.cleaning_fee) || who !== (SET.cleaner_name || null)) {
+    await sb.from('settings').upsert({ owner_id:USER.id, cleaning_fee:fee, cleaner_name:who, updated_at:new Date().toISOString() });
+    if (fee !== Number(SET.cleaning_fee)) await sb.from('cleanings').update({ amount: fee }).eq('done', false);
   }
 
   for (const inp of $('feeds').querySelectorAll('input[data-ch]')){
