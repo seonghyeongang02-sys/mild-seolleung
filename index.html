@@ -248,7 +248,7 @@ sec{display:block;background:#fff}
   </sec>
 
   <sec>
-    <div class="hd"><span class="t">빈 밤</span><span class="h">채우면 좋을 날</span><span class="n" id="gapN"></span></div>
+    <div class="hd"><span class="t">팔 수 있는 밤</span><span class="h">채우면 좋을 날</span><span class="n" id="gapN"></span></div>
     <table class="rows"><tbody id="gapRows"></tbody></table>
   </sec>
 
@@ -461,7 +461,7 @@ function renderToday(){
   const stay = (nm[TODAY]||[]).filter(b=>b.status==='confirmed');
   // 이달 남은 빈 밤
   const mEnd = ymd(new Date(parse(TODAY).getFullYear(), parse(TODAY).getMonth()+1, 0));
-  let free=0; for(let d=TODAY; d<=mEnd; d=addD(d,1)) if(!(nm[d]||[]).length) free++;
+  let free=0; for(let d=TODAY; d<=mEnd; d=addD(d,1)) if(!(nm[d]||[]).some(b=>b.status==='confirmed')) free++;
 
   const d = parse(TODAY);
   $('today').innerHTML =
@@ -541,26 +541,41 @@ function renderUpcoming(){
 }
 
 function renderGaps(){
+  /* [2026-10-12] 「빈 밤」을 「팔 수 있는 밤」으로 바꿨습니다.
+     예약이 없는데 어느 한 채널만 막아둔 날이 있습니다 —
+     채널끼리 캘린더를 연동해 두면 퇴실일을 하루 더 막아버리는 일이 생깁니다.
+     그런 날은 손 하나 까딱하면 팔 수 있는 날이라 따로 짚어줍니다. */
   const nm = byNight();
   const end = addD(TODAY,60);
-  const gaps=[]; let cur=null;
-  for(let d=TODAY; d<=end; d=addD(d,1)){
-    if (!(nm[d]||[]).length){ if(!cur) cur={from:d,to:d}; else cur.to=d; }
-    else if (cur){ gaps.push(cur); cur=null; }
-  }
-  if (cur) gaps.push(cur);
+  const sellable = (d) => !(nm[d]||[]).some(b => b.status==='confirmed');
+  const blockers = (d) => (nm[d]||[]).filter(b => b.status==='blocked');
 
-  const total = gaps.reduce((s,g)=>s+nights(g.from,addD(g.to,1)),0);
-  $('gapN').textContent = total ? `${total}박` : '';
-  $('gapRows').innerHTML = gaps.length ? gaps.map(g=>{
+  const runs=[]; let cur=null;
+  for(let d=TODAY; d<=end; d=addD(d,1)){
+    if (sellable(d)){
+      const bl = blockers(d).map(b=>chOf(b.channel).n).join('·');
+      if (cur && cur.bl===bl) cur.to=d;
+      else { if(cur) runs.push(cur); cur={from:d,to:d,bl}; }
+    } else if (cur){ runs.push(cur); cur=null; }
+  }
+  if (cur) runs.push(cur);
+
+  const total = runs.reduce((s2,g)=>s2+nights(g.from,addD(g.to,1)),0);
+  const stuck = runs.filter(g=>g.bl);
+  $('gapN').textContent = total ? `${total}박${stuck.length?' · 막힌 날 있음':''}` : '';
+
+  $('gapRows').innerHTML = runs.length ? runs.map(g=>{
     const n = nights(g.from, addD(g.to,1));
     const weekend = (()=>{ for(let d=g.from;d<=g.to;d=addD(d,1)){ const w=parse(d).getDay(); if(w===5||w===6) return true; } return false; })();
+    const note = g.bl
+      ? `<b style="color:var(--hot)">${esc(g.bl)}에서 막힘 — 풀면 판매 가능</b>`
+      : (weekend ? '주말 포함' : '');
     return `<tr class="gap"><td class="sub" style="width:92px">${n}박</td>
       <td class="gu">${md(g.from)}${n>1?` – ${md(g.to)}`:''} (${dowOf(g.from)})</td>
-      <td class="sub">${weekend?'주말 포함':''}</td>
+      <td class="sub">${note}</td>
       <td class="sub"></td>
-      <td class="r"><button class="btn sm gh" data-new="${g.from}">예약 넣기</button></td></tr>`;
-  }).join('') : `<tr><td colspan="5" class="empty">앞으로 60일 동안 빈 밤이 없습니다.</td></tr>`;
+      <td class="r">${g.bl?'':`<button class="btn sm gh" data-new="${g.from}">예약 넣기</button>`}</td></tr>`;
+  }).join('') : `<tr><td colspan="5" class="empty">앞으로 60일 동안 팔 수 있는 밤이 없습니다. 만실입니다.</td></tr>`;
 }
 
 function renderFoot(){
