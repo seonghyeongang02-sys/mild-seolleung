@@ -9,7 +9,7 @@
 :root{
   --ink:#1a1a1a; --bg:#eeedea; --card:#fff; --line:#e4e3df; --line2:#f1f0ec;
   --soft:#8a8a84; --mute:#a0a09a; --hot:#B4512C; --hotbg:#fdf6f3; --ok:#2f7d4f;
-  --ab:#D14B4B; --bk:#2E5FA3; --ag:#7E4FA8; --ex:#C9A227; --wh:#1F8A70; --dr:#6b6b66;
+  --ab:#D14B4B; --bk:#2E5FA3; --ag:#1F8A70; --ex:#C9A227; --wh:#7E4FA8; --dr:#6b6b66;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
@@ -67,7 +67,7 @@ button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit
 .ev{font-size:11px;border-radius:3px;padding:2px 5px;margin-top:3px;color:#fff;cursor:pointer;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
 .ev.ex{color:#3d3100}
-.ev.blocked{background:repeating-linear-gradient(45deg,#c9c8c3,#c9c8c3 4px,#dedcd7 4px,#dedcd7 8px);color:#5a5a55}
+.ev.blocked{opacity:.5}
 .ev.empty{background:#f4f3f0;color:#b5b4af;font-weight:500;cursor:default}
 
 /* 목록 */
@@ -506,12 +506,14 @@ function renderCal(){
     const list = nm[s]||[];
     let inner = `<div class="dn">${d.getDate()}${s===TODAY?' · 오늘':''}</div>`;
     if (list.length){
+      /* [2026-10-12] 막아둔 날도 채널 색으로 칠합니다.
+         전에는 회색 빗금이라 부킹닷컴·위홈이 전부 회색으로만 보였습니다.
+         예약과 구분은 색이 아니라 투명도(.5)로 합니다. */
       inner += list.map(b=>{
         const c = chOf(b.channel);
-        const nameTxt = b.status==='blocked' ? '막아둠' : (b.guest_name || chOf(b.channel).n);
-        const cls = b.status==='blocked' ? 'ev blocked' : `ev ${c.k}`;
-        const bg  = b.status==='blocked' ? '' : `background:${c.c};`;
-        return `<div class="${cls}" style="${bg}" data-bk="${b.id}">${esc(nameTxt)}</div>`;
+        const blocked = b.status==='blocked';
+        const nameTxt = blocked ? (c.n + ' 막음') : (b.guest_name || c.n);
+        return `<div class="ev ${c.k}${blocked?' blocked':''}" style="background:${c.c};" data-bk="${b.id}">${esc(nameTxt)}</div>`;
       }).join('');
     } else if (!off) {
       inner += `<div class="ev empty" data-new="${s}">빈 방</div>`;
@@ -822,21 +824,39 @@ $('mNext').onclick = ()=>goMon(1);
 $('mToday').onclick = ()=>goMon(0);
 
 /* ── 동기화 ───────────────────────────────────────── */
+async function doSync(){
+  const { data: { session } } = await sb.auth.getSession();
+  const r = await fetch(`${SB_URL}/functions/v1/ical-sync`, {
+    method:'POST', headers:{ 'Authorization':`Bearer ${session.access_token}`, 'Content-Type':'application/json' },
+    body:'{}' });
+  const j = await r.json();
+  if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
+  await loadAll(); render();
+  return j;
+}
+
 $('btnSync').onclick = async () => {
   const b=$('btnSync'); b.disabled=true; const old=b.textContent; b.textContent='동기화 중…';
   try{
-    const { data: { session } } = await sb.auth.getSession();
-    const r = await fetch(`${SB_URL}/functions/v1/ical-sync`, {
-      method:'POST', headers:{ 'Authorization':`Bearer ${session.access_token}`, 'Content-Type':'application/json' },
-      body:'{}' });
-    const j = await r.json();
-    if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
-    await loadAll(); render();
+    const j = await doSync();
     const parts=[]; if(j.added)parts.push(`새 예약 ${j.added}건`); if(j.updated)parts.push(`변경 ${j.updated}건`); if(j.cancelled)parts.push(`취소 ${j.cancelled}건`);
     alert(parts.length ? parts.join(' · ') : '바뀐 것이 없습니다.');
   }catch(e){ alert('동기화 실패\n'+e.message); }
   b.disabled=false; b.textContent=old;
 };
+
+/* 앱을 열었을 때 마지막 동기화가 1시간을 넘었으면 조용히 한 번 당겨옵니다.
+   서버가 1시간마다 돌고 있어서 평소엔 할 일이 없지만,
+   오래 안 켰다가 열었을 때 옛날 화면을 보는 일을 막아줍니다.
+   실패해도 아무 말 안 합니다 — 버튼을 누르면 그때 제대로 알려줍니다. */
+async function autoSync(){
+  if (!FEEDS.length) return;
+  const last = FEEDS.map(f=>f.last_sync_at).filter(Boolean).sort().pop();
+  if (last && Date.now() - new Date(last).getTime() < 3600000) return;
+  const b=$('btnSync'); const old=b.textContent; b.textContent='동기화 중…';
+  try { await doSync(); } catch(e) {}
+  b.textContent=old;
+}
 
 /* ── 설정 ─────────────────────────────────────────── */
 const CHLIST = [['airbnb','에어비앤비'],['booking','부킹닷컴'],['agoda','아고다'],['expedia','익스피디아'],['wehome','위홈']];
@@ -892,6 +912,7 @@ async function boot(){
   USER = session.user;
   $('login').style.display='none'; $('app').style.display='block';
   await loadAll(); render(); setTab('cal');
+  autoSync();
 }
 boot();
 </script>
