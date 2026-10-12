@@ -9,7 +9,7 @@
 :root{
   --ink:#1a1a1a; --bg:#eeedea; --card:#fff; --line:#e4e3df; --line2:#f1f0ec;
   --soft:#8a8a84; --mute:#a0a09a; --hot:#B4512C; --hotbg:#fdf6f3; --ok:#2f7d4f;
-  --ab:#D14B4B; --bk:#2E5FA3; --ag:#7E4FA8; --ex:#C9A227; --dr:#6b6b66;
+  --ab:#D14B4B; --bk:#2E5FA3; --ag:#7E4FA8; --ex:#C9A227; --wh:#1F8A70; --dr:#6b6b66;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
@@ -251,6 +251,7 @@ sec{display:block;background:#fff}
     <span><i class="cd" style="background:var(--bk)"></i>부킹닷컴</span>
     <span><i class="cd" style="background:var(--ag)"></i>아고다</span>
     <span><i class="cd" style="background:var(--ex)"></i>익스피디아</span>
+    <span><i class="cd" style="background:var(--wh)"></i>위홈</span>
     <span><i class="cd" style="background:var(--dr)"></i>직접예약</span>
   </div>
 </div>
@@ -316,7 +317,8 @@ sec{display:block;background:#fff}
     <div class="f"><label>채널</label><select id="bCh">
       <option value="direct">직접예약</option><option value="airbnb">에어비앤비</option>
       <option value="booking">부킹닷컴</option><option value="agoda">아고다</option>
-      <option value="expedia">익스피디아</option><option value="other">기타</option>
+      <option value="expedia">익스피디아</option>
+      <option value="wehome">위홈</option><option value="other">기타</option>
     </select></div>
     <div class="f"><label>상태</label><select id="bSt">
       <option value="confirmed">예약</option><option value="blocked">막아둠</option>
@@ -369,6 +371,7 @@ const $ = (id) => document.getElementById(id);
 const CH = {
   airbnb:{n:'에어비앤비',c:'var(--ab)',k:'ab'}, booking:{n:'부킹닷컴',c:'var(--bk)',k:'bk'},
   agoda:{n:'아고다',c:'var(--ag)',k:'ag'},      expedia:{n:'익스피디아',c:'var(--ex)',k:'ex'},
+  wehome:{n:'위홈',c:'var(--wh)',k:'wh'},
   direct:{n:'직접예약',c:'var(--dr)',k:'dr'},   other:{n:'기타',c:'var(--dr)',k:'dr'},
 };
 const chOf = (k) => CH[k] || CH.other;
@@ -695,7 +698,7 @@ function renderMoney(){
     `<div><span>비용</span><b class="${C?'neg':''}">${won(C)}</b></div>` +
     `<div><span>가동률</span><b>${Math.round(sold/days*100)}%</b></div>`;
 
-  const order = ['airbnb','booking','agoda','expedia','direct','other'];
+  const order = ['airbnb','booking','agoda','expedia','wehome','direct','other'];
   $('mIn').innerHTML = order.map(k=>{
     const v = R.byCh[k]; const c = chOf(k);
     if (!v && k==='other') return '';
@@ -836,7 +839,7 @@ $('btnSync').onclick = async () => {
 };
 
 /* ── 설정 ─────────────────────────────────────────── */
-const CHLIST = [['airbnb','에어비앤비'],['booking','부킹닷컴'],['agoda','아고다'],['expedia','익스피디아']];
+const CHLIST = [['airbnb','에어비앤비'],['booking','부킹닷컴'],['agoda','아고다'],['expedia','익스피디아'],['wehome','위홈']];
 $('btnCfg').onclick = ()=>{
   $('cRoom').value = ROOM?.name || '';
   $('cFee').value = SET?.cleaning_fee ?? 45000;
