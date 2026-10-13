@@ -69,10 +69,11 @@ button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit
 .ev.ex{color:#3d3100}
 .ev.blocked{opacity:.5}
 .ev.empty{background:#f4f3f0;color:#b5b4af;font-weight:500;cursor:default}
-.cv{font-size:10.5px;margin-top:3px;padding:2px 5px;border-radius:3px;cursor:pointer;font-weight:700;
-  background:#fff;border:1px solid var(--ink);color:var(--ink);
+.cv{font-size:11px;margin-top:3px;padding:3px 6px;border-radius:4px;cursor:pointer;font-weight:800;
+  background:#FFE8A3;border:1px solid #E0A800;color:#6B4E00;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.cv.done{border-color:var(--line);color:var(--mute);font-weight:500;background:#fafaf9}
+.cv.done{background:#F2F1ED;border-color:var(--line);color:var(--mute);font-weight:500;
+  text-decoration:line-through;text-decoration-color:#c9c8c3}
 
 /* 목록 */
 sec{display:block;background:#fff}
@@ -171,12 +172,13 @@ sec{display:block;background:#fff}
 
 @media (max-width:620px){
   .wrap{padding-bottom:40px}
-  .cell{min-height:54px;padding:3px 2px}
-  .ev{font-size:9.5px;padding:1px 2px;letter-spacing:-.03em}
-  .cv{font-size:9px;padding:1px 2px;letter-spacing:-.03em}
-  .cal{padding:12px 8px 4px}
-  .dow{font-size:10px}
-  .cell .dn{font-size:10.5px}
+  /* [2026-10-13] 모바일 달력을 키웠습니다. 목록을 다 뺀 만큼 세로 여유가 생겼습니다. */
+  .cell{min-height:76px;padding:4px 3px}
+  .ev{font-size:11px;padding:3px 4px;letter-spacing:-.02em;margin-top:4px}
+  .cv{font-size:10.5px;padding:3px 4px;letter-spacing:-.02em;margin-top:4px}
+  .cal{padding:12px 6px 6px}
+  .dow{font-size:11.5px;padding:7px 0}
+  .cell .dn{font-size:12px;font-weight:600}
   .cal{padding:12px 10px 4px}
   .today{gap:16px;padding:12px}
   .bar{padding:10px 12px}
@@ -221,7 +223,6 @@ sec{display:block;background:#fff}
     </span>
     <span class="sp">
       <button class="btn sm" id="btnSync">채널 동기화</button>
-      <button class="btn sm k" id="btnNew">+ 예약</button>
       <button class="btn sm gh" id="btnCfg">설정</button>
     </span>
   </div>
@@ -242,24 +243,14 @@ sec{display:block;background:#fff}
     <div class="grid" id="grid"></div>
   </div>
 
-  <sec>
-    <div class="hd"><span class="t">다가오는 예약</span><span class="h">앞으로 60일</span><span class="n" id="upN"></span></div>
-    <table class="rows"><tbody id="upRows"></tbody></table>
-  </sec>
-
-  <sec>
-    <div class="hd"><span class="t">팔 수 있는 밤</span><span class="h">채우면 좋을 날</span><span class="n" id="gapN"></span></div>
-    <table class="rows"><tbody id="gapRows"></tbody></table>
-  </sec>
-
   <div class="foot" id="foot"></div>
   <div class="leg">
-    <span><i class="cd" style="background:var(--ab)"></i>에어비앤비</span>
-    <span><i class="cd" style="background:var(--bk)"></i>부킹닷컴</span>
-    <span><i class="cd" style="background:var(--ag)"></i>아고다</span>
-    <span><i class="cd" style="background:var(--ex)"></i>익스피디아</span>
-    <span><i class="cd" style="background:var(--wh)"></i>위홈</span>
-    <span><i class="cd" style="background:var(--dr)"></i>직접예약</span>
+    <span><i class="cd" style="background:var(--ab)"></i>Airbnb</span>
+    <span><i class="cd" style="background:var(--bk)"></i>Booking.com</span>
+    <span><i class="cd" style="background:var(--ag)"></i>Agoda</span>
+    <span><i class="cd" style="background:var(--ex)"></i>Expedia</span>
+    <span><i class="cd" style="background:var(--wh)"></i>Wehome</span>
+    <span><i class="cd" style="background:var(--dr)"></i>Direct</span>
   </div>
 </div>
 
@@ -291,10 +282,7 @@ sec{display:block;background:#fff}
     <div class="f"><label>퇴실</label><input id="bOut" type="date"></div>
   </div>
   <div class="f"><label>손님 이름</label><input id="bName" placeholder="예: Yuki Tanaka"></div>
-  <div class="f2">
-    <div class="f"><label>인원</label><input id="bGuests" type="number" min="1" placeholder="2"></div>
-    <div class="f"><label>금액 (원)</label><input id="bAmt" type="number" min="0" step="1000" placeholder="312000"></div>
-  </div>
+  <div class="f"><label>인원</label><input id="bGuests" type="number" min="1" placeholder="2"></div>
   <div class="f2">
     <div class="f"><label>채널</label><select id="bCh">
       <option value="direct">직접예약</option><option value="airbnb">에어비앤비</option>
@@ -352,10 +340,10 @@ const sb = createClient(SB_URL, SB_ANON);
 /* ── 공통 ─────────────────────────────────────────── */
 const $ = (id) => document.getElementById(id);
 const CH = {
-  airbnb:{n:'에어비앤비',s:'에어비앤비',c:'var(--ab)',k:'ab'}, booking:{n:'부킹닷컴',s:'부킹',c:'var(--bk)',k:'bk'},
-  agoda:{n:'아고다',s:'아고다',c:'var(--ag)',k:'ag'},  expedia:{n:'익스피디아',s:'익스피디아',c:'var(--ex)',k:'ex'},
-  wehome:{n:'위홈',s:'위홈',c:'var(--wh)',k:'wh'},
-  direct:{n:'직접예약',s:'직접',c:'var(--dr)',k:'dr'},   other:{n:'기타',s:'기타',c:'var(--dr)',k:'dr'},
+  airbnb:{n:'Airbnb',s:'Airbnb',c:'var(--ab)',k:'ab'}, booking:{n:'Booking.com',s:'Booking',c:'var(--bk)',k:'bk'},
+  agoda:{n:'Agoda',s:'Agoda',c:'var(--ag)',k:'ag'},  expedia:{n:'Expedia',s:'Expedia',c:'var(--ex)',k:'ex'},
+  wehome:{n:'Wehome',s:'Wehome',c:'var(--wh)',k:'wh'},
+  direct:{n:'Direct',s:'Direct',c:'var(--dr)',k:'dr'},   other:{n:'Other',s:'Other',c:'var(--dr)',k:'dr'},
 };
 const chOf = (k) => CH[k] || CH.other;
 const DOW = ['일','월','화','수','목','금','토'];
@@ -431,7 +419,7 @@ async function loadAll(){
 
 /* ── 그리기 ───────────────────────────────────────── */
 function render(){
-  renderToday(); renderCal(); renderUpcoming(); renderGaps(); renderFoot();
+  renderToday(); renderCal(); renderFoot();
   renderClean();
 }
 
@@ -441,7 +429,6 @@ function setTab(t){
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab===t));
   document.querySelectorAll('[data-pane]').forEach(p => { p.style.display = (p.dataset.pane===t) ? '' : 'none'; });
   // 「+ 예약 / 채널 동기화」는 달력에서만 의미가 있습니다
-  $('btnNew').style.display  = (t==='cal') ? '' : 'none';
   $('btnSync').style.display = (t==='cal') ? '' : 'none';
   window.scrollTo(0,0);
 }
@@ -501,12 +488,12 @@ function renderCal(){
         return `<div class="ev ${c.k}${blocked?' blocked':''}" style="background:${c.c};" data-bk="${b.id}">${esc(nameTxt)}</div>`;
       }).join('');
     } else if (!off) {
-      inner += `<div class="ev empty" data-new="${s}">빈 방</div>`;
+      inner += `<div class="ev empty">빈 방</div>`;
     }
     /* [2026-10-12] 퇴실일에는 청소를 같은 칸에 같이 보여줍니다.
        탭을 왔다 갔다 하지 않아도 「이 날 청소 있구나」가 바로 보입니다. */
     const cl = CLS.find(c => c.cdate === s);
-    if (cl) inner += `<div class="cv${cl.done?' done':''}" data-cl="${cl.id}">${cl.done?'✓ ':''}청소${CLEANER?' · '+esc(CLEANER):''}</div>`;
+    if (cl) inner += `<div class="cv${cl.done?' done':''}" data-cl="${cl.id}">${cl.done?'✓ 청소완료':'🧹 청소'}${CLEANER?' · '+esc(CLEANER):''}</div>`;
     h += `<div class="cell${off?' off':''}${s===TODAY?' now':''}">${inner}</div>`;
   }
   $('grid').innerHTML = h;
@@ -531,75 +518,24 @@ function rowBk(b){
     ${amt}</tr>`;
 }
 
-function renderUpcoming(){
-  const end = addD(TODAY,60);
-  const list = BKS.filter(b=>b.checkout_date>=TODAY && b.checkin_date<=end)
-                  .sort((a,b)=>a.checkin_date.localeCompare(b.checkin_date));
-  $('upN').textContent = list.length ? `${list.length}건` : '';
-  $('upRows').innerHTML = list.length ? list.map(rowBk).join('')
-    : `<tr><td colspan="5" class="empty">예약이 없습니다. 「채널 동기화」를 누르거나 「+ 예약」으로 직접 넣으세요.</td></tr>`;
-}
-
-function renderGaps(){
-  /* [2026-10-12] 「빈 밤」을 「팔 수 있는 밤」으로 바꿨습니다.
-     예약이 없는데 어느 한 채널만 막아둔 날이 있습니다 —
-     채널끼리 캘린더를 연동해 두면 퇴실일을 하루 더 막아버리는 일이 생깁니다.
-     그런 날은 손 하나 까딱하면 팔 수 있는 날이라 따로 짚어줍니다. */
-  const nm = byNight();
-  const end = addD(TODAY,60);
-  const sellable = (d) => !(nm[d]||[]).some(b => b.status==='confirmed');
-  const blockers = (d) => (nm[d]||[]).filter(b => b.status==='blocked');
-
-  const runs=[]; let cur=null;
-  for(let d=TODAY; d<=end; d=addD(d,1)){
-    if (sellable(d)){
-      const bl = blockers(d).map(b=>chOf(b.channel).n).join('·');
-      if (cur && cur.bl===bl) cur.to=d;
-      else { if(cur) runs.push(cur); cur={from:d,to:d,bl}; }
-    } else if (cur){ runs.push(cur); cur=null; }
-  }
-  if (cur) runs.push(cur);
-
-  const total = runs.reduce((s2,g)=>s2+nights(g.from,addD(g.to,1)),0);
-  const stuck = runs.filter(g=>g.bl);
-  $('gapN').textContent = total ? `${total}박${stuck.length?' · 막힌 날 있음':''}` : '';
-
-  $('gapRows').innerHTML = runs.length ? runs.map(g=>{
-    const n = nights(g.from, addD(g.to,1));
-    const weekend = (()=>{ for(let d=g.from;d<=g.to;d=addD(d,1)){ const w=parse(d).getDay(); if(w===5||w===6) return true; } return false; })();
-    const note = g.bl
-      ? `<b style="color:var(--hot)">${esc(g.bl)}에서 막힘 — 풀면 판매 가능</b>`
-      : (weekend ? '주말 포함' : '');
-    return `<tr class="gap"><td class="sub" style="width:92px">${n}박</td>
-      <td class="gu">${md(g.from)}${n>1?` – ${md(g.to)}`:''} (${dowOf(g.from)})</td>
-      <td class="sub">${note}</td>
-      <td class="sub"></td>
-      <td class="r">${g.bl?'':`<button class="btn sm gh" data-new="${g.from}">예약 넣기</button>`}</td></tr>`;
-  }).join('') : `<tr><td colspan="5" class="empty">앞으로 60일 동안 팔 수 있는 밤이 없습니다. 만실입니다.</td></tr>`;
-}
-
 function renderFoot(){
+  /* [2026-10-13] 금액 표시를 전부 뺐습니다.
+     iCal 로는 금액이 안 오고, 손으로 적지 않으면 늘 「—」 였습니다.
+     달력에서 바로 쓸모 있는 가동률과 마지막 동기화만 남깁니다. */
   const y=MON.getFullYear(), m=MON.getMonth();
   const mStart = ymd(new Date(y,m,1)), mEnd = ymd(new Date(y,m+1,0));
   const nm = byNight();
-  let sold=0, days=0;
-  for(let d=mStart; d<=mEnd; d=addD(d,1)){ days++; if((nm[d]||[]).some(b=>b.status==='confirmed')) sold++; }
-
-  // 이달에 걸친 예약의 금액을 밤 수로 나눠 이달 몫만 더합니다
-  let rev=0, revN=0;
-  BKS.filter(b=>b.status==='confirmed' && b.amount!=null).forEach(b=>{
-    const tot = nights(b.checkin_date,b.checkout_date);
-    const inM = nightsOf(b).filter(d=>d>=mStart && d<=mEnd).length;
-    if (inM){ rev += Number(b.amount) * inM / tot; revN += inM; }
-  });
-
+  let sold=0, days=0, free=0;
+  for(let d=mStart; d<=mEnd; d=addD(d,1)){
+    days++;
+    if((nm[d]||[]).some(b=>b.status==='confirmed')) sold++; else free++;
+  }
   const sync = FEEDS.filter(f=>f.last_sync_at).sort((a,b)=>b.last_sync_at.localeCompare(a.last_sync_at))[0];
   const st = sync ? new Date(sync.last_sync_at).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '아직 없음';
 
   $('foot').innerHTML =
-    `<div class="mm"><span>${m+1}월 수입</span><b>${rev?won(Math.round(rev)):'—'}</b></div>` +
-    `<div class="mm"><span>1박 평균</span><b>${revN?won(Math.round(rev/revN)):'—'}</b></div>` +
-    `<div class="mm"><span>가동률</span><b>${Math.round(sold/days*100)}%</b></div>` +
+    `<div class="mm"><span>${m+1}월 가동률</span><b>${Math.round(sold/days*100)}%</b></div>` +
+    `<div class="mm"><span>빈 밤</span><b>${free}박</b></div>` +
     `<div class="mm"><span>마지막 동기화</span><b style="font-weight:600;font-size:12.5px">${st}</b></div>`;
 }
 
@@ -677,7 +613,6 @@ function openBk(b, presetDate){
   $('bOut').value = b ? b.checkout_date : addD(presetDate || TODAY, 1);
   $('bName').value = b?.guest_name || '';
   $('bGuests').value = b?.num_guests ?? '';
-  $('bAmt').value = b?.amount ?? '';
   $('bCh').value = b?.channel || 'direct';
   $('bSt').value = b?.status || 'confirmed';
   $('bNote').value = b?.note || '';
@@ -690,7 +625,6 @@ function openBk(b, presetDate){
 const closeBk = () => $('ovBk').classList.remove('on');
 $('bCancel').onclick = closeBk;
 $('ovBk').onclick = (e)=>{ if(e.target===$('ovBk')) closeBk(); };
-$('btnNew').onclick = ()=>openBk(null);
 
 $('bSave').onclick = async () => {
   const msg=$('bkMsg'); msg.className='msg'; msg.textContent='저장 중…';
@@ -699,7 +633,6 @@ $('bSave').onclick = async () => {
   const row = {
     guest_name: $('bName').value.trim() || null,
     num_guests: $('bGuests').value ? Number($('bGuests').value) : null,
-    amount: $('bAmt').value ? Number($('bAmt').value) : null,
     status: $('bSt').value, note: $('bNote').value.trim() || null,
   };
   let err;
@@ -729,8 +662,6 @@ $('bDel').onclick = async () => {
 document.addEventListener('click', (e)=>{
   const t = e.target.closest('[data-bk]');
   if (t){ const b = BKS.find(x=>x.id===t.dataset.bk); if (b) openBk(b); return; }
-  const n = e.target.closest('[data-new]');
-  if (n){ openBk(null, n.dataset.new); }
 });
 
 /* ── 달 이동 ──────────────────────────────────────── */
